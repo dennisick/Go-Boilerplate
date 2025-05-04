@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"net/http"
+	"server/internal/api"
 
 	"github.com/google/uuid"
-
-	ctxUtil "server/util/ctx"
 )
 
 const (
@@ -25,7 +24,7 @@ func RequestID(next http.Handler) http.Handler {
 
 		w.Header().Set(HeaderKeyRequestId, requestID)
 
-		ctx = ctxUtil.SetRequestID(ctx, requestID)
+		ctx = api.SetRequestID(ctx, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -9,14 +9,23 @@ package main
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
-	"server/internal/api"
+	api5 "server/internal/api"
 	"server/internal/api/router"
-	"server/internal/application"
-	user2 "server/internal/auth/user"
 	"server/internal/config"
-	"server/internal/connection"
 	"server/internal/database"
-	"server/internal/user"
+	"server/internal/domain/application"
+	api2 "server/internal/domain/application/api"
+	repository2 "server/internal/domain/application/repository"
+	user2 "server/internal/domain/auth/user"
+	api4 "server/internal/domain/auth/user/api"
+	repository4 "server/internal/domain/auth/user/repository"
+	"server/internal/domain/auth/user/service"
+	"server/internal/domain/connection"
+	api3 "server/internal/domain/connection/api"
+	repository3 "server/internal/domain/connection/repository"
+	"server/internal/domain/user"
+	"server/internal/domain/user/api"
+	"server/internal/domain/user/repository"
 )
 
 // Injectors from wire.go:
@@ -24,18 +33,18 @@ import (
 func InitializeApp() *App {
 	applicationConfig := config.LoadConfig()
 	pool := database.New(applicationConfig)
-	userRepository := user.NewUserRepository(pool)
-	userController := user.NewUserController(userRepository)
+	userRepository := repository.NewUserRepository(pool)
+	userController := api.NewUserController(userRepository)
 	userDepsContainer := user.NewUserDepsContainer(userRepository, userController)
-	applicationRepository := application.NewApplicationRepository(pool)
-	applicationController := application.NewApplicationController(applicationRepository)
+	applicationRepository := repository2.NewApplicationRepository(pool)
+	applicationController := api2.NewApplicationController(applicationRepository)
 	applicationDepsContainer := application.NewApplicationDepsContainer(applicationRepository, applicationController)
-	connectionRepository := connection.NewConnectionRepository(pool)
-	connectionController := connection.NewConnectionController(connectionRepository)
-	tokenRepository := user2.NewTokenRepository(pool)
-	userAuthService := user2.NewUserAuthService(applicationConfig, userRepository, tokenRepository)
+	connectionRepository := repository3.NewConnectionRepository(pool)
+	connectionController := api3.NewConnectionController(connectionRepository)
+	tokenRepository := repository4.NewTokenRepository(pool)
+	userAuthService := service.NewUserAuthService(applicationConfig, userRepository, tokenRepository)
 	connectionDepsContainer := connection.NewConnectionDepsContainer(connectionRepository, connectionController, userAuthService)
-	userAuthController := user2.NewUserAuthController(applicationConfig, userAuthService, tokenRepository)
+	userAuthController := api4.NewUserAuthController(applicationConfig, userAuthService, tokenRepository)
 	userAuthDepsContainer := user2.NewUserAuthDepsContainer(tokenRepository, userAuthService, userAuthController)
 	app := NewApp(applicationConfig, userDepsContainer, applicationDepsContainer, connectionDepsContainer, userAuthDepsContainer, pool)
 	return app
@@ -65,7 +74,7 @@ func NewApp(config2 *config.ApplicationConfig,
 	r.Group(applicationDeps.RegisterRoutes(r))
 	r.Group(connectionDeps.RegisterRoutes(r))
 	r.Group(userAuthDeps.RegisterRoutes(r))
-	api2 := api.New(config2, r)
+	api6 := api5.New(config2, r)
 
 	return &App{
 		Config:          config2,
@@ -74,6 +83,6 @@ func NewApp(config2 *config.ApplicationConfig,
 		ConnectionDeps:  connectionDeps,
 		UserAuthDeps:    userAuthDeps,
 		Database:        db,
-		Api:             api2,
+		Api:             api6,
 	}
 }
